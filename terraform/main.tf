@@ -1,5 +1,5 @@
 provider "aws" {
-  region = "ap-south-1"
+  region = "us-east-1"
 }
 
 resource "aws_vpc" "main" {
@@ -10,7 +10,7 @@ resource "aws_vpc" "main" {
 resource "aws_subnet" "public" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = "10.0.1.0/24"
-  availability_zone = "ap-south-1a"
+  availability_zone = "us-east-1"
   map_public_ip_on_launch = true
   tags = { Name = "ci-cd-subnet" }
 }
@@ -39,11 +39,11 @@ resource "aws_security_group" "jenkins_sg" {
 }
 
 resource "aws_instance" "jenkins" {
-  ami           = "ami-0c2b8ca1dad447f8a"
-  instance_type = "t2.medium"
+  ami           = "ami-0341d95f75f311023"
+  instance_type = "t3.micro"
   subnet_id     = aws_subnet.public.id
   security_groups = [aws_security_group.jenkins_sg.name]
-  key_name      = "your-keypair"
+  key_name      = "vle8"
   tags = { Name = "jenkins-server" }
 }
 
