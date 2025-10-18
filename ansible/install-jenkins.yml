@@ -1,39 +1,73 @@
+---
 - hosts: jenkins
   become: yes
+  vars:
+    jenkins_container_name: jenkins
+    jenkins_image: jenkins/jenkins
+    jenkins_tag: lts
+    jenkins_http_port: 8080
+    jenkins_agent_port: 50000
+    jenkins_volume: jenkins_home
+    java_packages:
+      - java-11-amazon-corretto
+    additional_packages:
+      - git
+      - wget
+
   tasks:
-    - name: Install dependencies
+    - name: Update all packages
       yum:
-        name:
-          - java-11-openjdk
-          - git
-          - docker
-          - wget
+        name: '*'
+        state: latest
+
+    - name: Install Java and other dependencies
+      yum:
+        name: "{{ java_packages + additional_packages }}"
         state: present
 
-    - name: Enable Docker service
+    - name: Install Docker
+      yum:
+        name: docker
+        state: present
+
+    - name: Start and enable Docker service
       service:
         name: docker
         state: started
         enabled: yes
 
-    - name: Add Jenkins repo
-      shell: |
-        wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
-        rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io.key
-
-    - name: Install Jenkins
-      yum:
-        name: jenkins
-        state: present
-
-    - name: Start Jenkins
-      service:
-        name: jenkins
-        state: started
-        enabled: yes
-
-    - name: Add Jenkins to Docker group
+    - name: Add ec2-user to docker group
       user:
-        name: jenkins
+        name: ec2-user
         groups: docker
         append: yes
+
+    - name: Create Docker volume for Jenkins
+      docker_volume:
+        name: "{{ jenkins_volume }}"
+        state: present
+
+    - name: Pull Jenkins Docker image
+      docker_image:
+        name: "{{ jenkins_image }}"
+        tag: "{{ jenkins_tag }}"
+        source: pull
+
+    - name: Run Jenkins container
+      docker_container:
+        name: "{{ jenkins_container_name }}"
+        image: "{{ jenkins_image }}:{{ jenkins_tag }}"
+        state: started
+        restart_policy: always
+        published_ports:
+          - "{{ jenkins_http_port }}:8080"
+          - "{{ jenkins_agent_port }}:50000"
+        volumes:
+          - "{{ jenkins_volume }}:/var/jenkins_home"
+
+    - name: Ensure Jenkins is accessible
+      wait_for:
+        host: "{{ ansible_host }}"
+        port: "{{ jenkins_http_port }}"
+        delay: 10
+        timeout: 300
