@@ -1,0 +1,39 @@
+- hosts: jenkins
+  become: yes
+  tasks:
+    - name: Install dependencies
+      yum:
+        name:
+          - java-11-openjdk
+          - git
+          - docker
+          - wget
+        state: present
+
+    - name: Enable Docker service
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Add Jenkins repo
+      shell: |
+        wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
+        rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io.key
+
+    - name: Install Jenkins
+      yum:
+        name: jenkins
+        state: present
+
+    - name: Start Jenkins
+      service:
+        name: jenkins
+        state: started
+        enabled: yes
+
+    - name: Add Jenkins to Docker group
+      user:
+        name: jenkins
+        groups: docker
+        append: yes
