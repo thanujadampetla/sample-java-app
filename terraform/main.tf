@@ -2,70 +2,89 @@ provider "aws" {
   region = "us-east-1"
 }
 
-# VPC
+# 1️⃣ VPC
 resource "aws_vpc" "main" {
   cidr_block = "10.0.0.0/16"
   tags = { Name = "ci-cd-vpc" }
 }
 
+# 2️⃣ Public Subnet
 resource "aws_subnet" "public" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = cidrsubnet(aws_vpc.main.cidr_block, 8, 1)
-  availability_zone = "us-east-1a"
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.1.0/24"
+  availability_zone       = "us-east-1a"
   map_public_ip_on_launch = true
-  tags = { Name = "ci-cd-subnet" }
+  tags = { Name = "ci-cd-public-subnet" }
 }
 
-
-# Security Group
-resource "aws_security_group" "jenkins_sg" {
+# 3️⃣ Internet Gateway
+resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.main.id
-  ingress {
-    from_port   = 8080
-    to_port     = 8080
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  tags   = { Name = "ci-cd-igw" }
+}
+
+# 4️⃣ Route Table
+resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.main.id
+  tags   = { Name = "ci-cd-public-rt" }
+}
+
+# Route to Internet Gateway
+resource "aws_route" "internet_access" {
+  route_table_id         = aws_route_table.public.id
+  destination_cidr_block = "0.0.0.0/0"
+  gateway_id             = aws_internet_gateway.igw.id
+}
+
+# Associate route table with public subnet
+resource "aws_route_table_association" "public_assoc" {
+  subnet_id      = aws_subnet.public.id
+  route_table_id = aws_route_table.public.id
+}
+
+# 5️⃣ Security Group
+resource "aws_security_group" "jenkins_sg" {
+  name        = "jenkins-sg"
+  description = "Allow SSH and Jenkins"
+  vpc_id      = aws_vpc.main.id
+
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  ingress {
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
   tags = { Name = "jenkins-sg" }
 }
 
-# Use latest Amazon Linux 2 AMI
-data "aws_ami" "amazon_linux" {
-  most_recent = true
-  owners      = ["amazon"]
-  filter {
-    name   = "name"
-    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
-  }
-}
-
+# 6️⃣ EC2 Instance
 resource "aws_instance" "jenkins" {
-  ami             = data.aws_ami.amazon_linux.id
-  instance_type   = "t3.micro"
-  subnet_id       = aws_subnet.public.id
+  ami                         = "ami-0341d95f75f311023" # Amazon Linux 2
+  instance_type               = "t3.micro"
+  subnet_id                   = aws_subnet.public.id
+  vpc_security_group_ids      = [aws_security_group.jenkins_sg.id]
+  key_name                    = "vle8"
   associate_public_ip_address = true
 
-  # Use VPC security group IDs, not names
-  vpc_security_group_ids = [aws_security_group.jenkins_sg.id]
-
-  key_name        = "vle8"
   tags = { Name = "jenkins-server" }
 }
 
-
-# Output public IP
+# 7️⃣ Output public IP
 output "jenkins_public_ip" {
   value = aws_instance.jenkins.public_ip
 }
