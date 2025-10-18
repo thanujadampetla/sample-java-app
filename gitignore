@@ -28,6 +28,8 @@ Thumbs.db
 # ==========================================
 *.tfstate
 *.tfstate.backup
+terraform.tfstate.backup
+terrafform.tfstate
 .terraform/
 .terraform.lock.hcl
 terraform.tfvars
