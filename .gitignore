@@ -1,0 +1,102 @@
+# ==========================================
+# Java / Maven
+# ==========================================
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.iml
+*.log
+
+
+
+/terraform/.terraform/providers/registry.terraform.io/hashicorp/aws/6.17.0/linux_amd64/terraform-provider-aws_v6.17.0_x5
+
+
+/home/chintu/sample-java-app/app/Jenkinsfile
+
+# ==========================================
+# IDE / Editor
+# ==========================================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ==========================================
+# OS Generated
+# ==========================================
+.DS_Store
+Thumbs.db
+
+# ==========================================
+# Terraform
+# ==========================================
+*.tfstate
+*.tfstate.backup
+terraform.tfstate.backup
+terrafform.tfstate
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
+terraform.tfvars.json
+
+# Ignore Terraform working directories and state files
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+terraform.tfstate
+terraform.tfstate.backup
+override.tf
+override.tf.json
+.terraform.lock.hcl
+
+
+# ==========================================
+# Ansible
+# ==========================================
+*.retry
+*.pem
+*.key
+*.vault
+inventory.ini
+inventory
+
+# ==========================================
+# Docker
+# ==========================================
+*.pid
+*.sock
+.env
+docker-compose.override.yml
+
+# ==========================================
+# Jenkins
+# ==========================================
+secrets/
+*.xml
+*.hpi
+*.jpi
+workspace/
+
+# ==========================================
+# Node / NPM (if frontend is added later)
+# ==========================================
+node_modules/
+
+# ==========================================
+# Custom: Security and local keys
+# ==========================================
+/mnt/
+/home/chintu/Downloads/vle8.pem
+**/vle8.pem
+**/*.pem
+/terraform/.terraform/providers/registry.terraform.io/hashicorp/aws/6.17.0/linux_amd64/terraform-provider-aws_v6.17.0_x5
+
+
+/home/chintu/sample-java-app/app/Jenkinsfile
+app/Jenkinsfile
+/home/chintu/sample-java-app/app/Jenkinsfile
+app/Jenkinsfile
