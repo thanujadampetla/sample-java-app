@@ -10,9 +10,9 @@ resource "aws_vpc" "main" {
 
 # 2️⃣ Public Subnet
 resource "aws_subnet" "public" {
-  vpc_id                  = aws_vpc.main.id
-  cidr_block              = "10.0.1.0/24"
-  availability_zone       = "us-east-1a"
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.1.0/24"
+  availability_zone = "ap-south-1a"
   map_public_ip_on_launch = true
   tags = { Name = "ci-cd-public-subnet" }
 }
@@ -74,13 +74,11 @@ resource "aws_security_group" "jenkins_sg" {
 
 # 6️⃣ EC2 Instance
 resource "aws_instance" "jenkins" {
-  ami                         = "ami-0341d95f75f311023" # Amazon Linux 2
-  instance_type               = "t3.micro"
-  subnet_id                   = aws_subnet.public.id
-  vpc_security_group_ids      = [aws_security_group.jenkins_sg.id]
-  key_name                    = "vle8"
-  associate_public_ip_address = true
-
+  ami           = "ami-0c2b8ca1dad447f8a"
+  instance_type = "t2.medium"
+  subnet_id     = aws_subnet.public.id
+  security_groups = [aws_security_group.jenkins_sg.name]
+  key_name      = "your-keypair"
   tags = { Name = "jenkins-server" }
 }
 
