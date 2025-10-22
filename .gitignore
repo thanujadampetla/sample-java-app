@@ -101,3 +101,4 @@ terraform.tfstate
 app/Jenkinsfile
 /home/chintu/sample-java-app/app/Jenkinsfile
 app/Jenkinsfile
+.terraform/

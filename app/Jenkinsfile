@@ -1,44 +1,58 @@
 pipeline {
     agent any
-
-    tools {
-        maven 'Maven 3.8.1'
-    }
-
     environment {
-        DOCKER_IMAGE = "thanujadampetla/sample-java-app:${BUILD_NUMBER}"
+        DOCKERHUB = 'dampetla/sample-java-app' // replace with your Docker Hub repo
+        IMAGE = "$DOCKERHUB:${BUILD_NUMBER}"
+        COLOR = 'green' // can later compute opposite for blue/green deployments
+        KUBECONFIG = '/home/ubuntu/.kube/config' // Jenkins user must have kubeconfig
+        REG_CREDS = 'dockerhub-creds' // Jenkins credentials ID
     }
-
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/thanujadampetla/sample-java-app.git'
-            }
-        }
-
-        stage('Build with Maven') {
-            steps {
-                sh 'mvn clean package'
+                checkout scm
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $DOCKER_IMAGE .'
+                sh 'docker --version'
+                sh 'docker build -t $IMAGE .'
             }
         }
 
-        stage('Push to Docker Hub') {
+        stage('Push Docker Image') {
             steps {
-                withDockerRegistry([credentialsId: 'docker-hub-creds']) {
-                    sh 'docker push $DOCKER_IMAGE'
+                withCredentials([usernamePassword(credentialsId: REG_CREDS, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                    sh 'docker push $IMAGE'
                 }
             }
         }
 
-        stage('Deploy to Kubernetes') {
+        stage('Deploy to Kubernetes (Green)') {
             steps {
-                sh 'kubectl set image deployment/sample-app-deployment sample-container=$DOCKER_IMAGE'
+                sh '''
+                kubectl set image deployment/myapp-$COLOR myapp=$IMAGE --record || \
+                kubectl apply -f k8s/deployment-$COLOR.yaml
+                kubectl rollout status deployment/myapp-$COLOR
+                '''
+            }
+        }
+
+        stage('Switch Service') {
+            steps {
+                input message: "Promote $COLOR deployment to production?"
+                sh '''
+                kubectl patch service myapp-service -p '{
+                  "spec": {
+                    "selector": {
+                      "app": "myapp",
+                      "color": "'$COLOR'"
+                    }
+                  }
+                }'
+                '''
             }
         }
     }
