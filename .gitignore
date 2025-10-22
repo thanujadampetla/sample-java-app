@@ -94,8 +94,9 @@ node_modules/
 **/vle8.pem
 **/*.pem
 /terraform/.terraform/providers/registry.terraform.io/hashicorp/aws/6.17.0/linux_amd64/terraform-provider-aws_v6.17.0_x5
-
-
+terraform.tfstate
+.terraform/
+terraform.tfstate
 /home/chintu/sample-java-app/app/Jenkinsfile
 app/Jenkinsfile
 /home/chintu/sample-java-app/app/Jenkinsfile
